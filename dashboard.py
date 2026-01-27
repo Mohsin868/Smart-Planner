@@ -67,7 +67,7 @@ def launch_dashboard():
         col1, col2, col3 = st.columns(3)
         col1.metric("🔥 Pending Tasks", pending_count)
         col2.metric("✅ Completed", completed_count)
-        col3.metric("⚡ XP", st.session_state.xp)
+        col3.metric("⚡ XP", st.session_state.get("xp", 0))
 
         st.divider()
 

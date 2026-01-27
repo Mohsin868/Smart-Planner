@@ -3,10 +3,22 @@ from auth import login_user, register_user
 from dashboard import launch_dashboard
 
 # Initialize session_state
+# ---------- SESSION STATE INIT ----------
 if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False
+    st.session_state.logged_in = False
+
 if "user" not in st.session_state:
-    st.session_state["user"] = None
+    st.session_state.user = None
+
+if "xp" not in st.session_state:
+    st.session_state.xp = 0
+
+if "level" not in st.session_state:
+    st.session_state.level = 1
+
+if "streak" not in st.session_state:
+    st.session_state.streak = 0
+
 
 # ---------- LOGGED IN ----------
 if st.session_state["logged_in"]:
