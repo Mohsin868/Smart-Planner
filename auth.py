@@ -31,9 +31,20 @@ def register_user(username, password):
     with open(USERS_FILE, "w") as f:
         json.dump(users, f)
 
-    # Create empty files for the user
-    open(f"data/{username}_tasks.csv", "a").close()
-    open(f"data/{username}_routine.json", "a").close()
+    # Create user task file with headers
+    tasks_file = f"data/{username}_tasks.csv"
+    if not os.path.exists(tasks_file):
+        with open(tasks_file, "w") as f:
+            f.write(
+                "Task Name,Category,Priority,Due Date,Duration,Notes,Status\n"
+            )
+
+    # Create routine file safely
+    routine_file = f"data/{username}_routine.json"
+    if not os.path.exists(routine_file):
+        with open(routine_file, "w") as f:
+            json.dump({}, f)
+
 
     return True, "Registration successful! Please login."
 
