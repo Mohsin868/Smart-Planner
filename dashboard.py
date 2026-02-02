@@ -131,7 +131,9 @@ def launch_dashboard():
         conn = get_connection()
         cur = conn.cursor()
 
-        for prayer in ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]:
+        prayers = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]
+
+        for prayer in prayers:
 
             cur.execute("""
                 SELECT timing_status FROM prayer_logs
@@ -140,37 +142,28 @@ def launch_dashboard():
 
             existing = cur.fetchone()
 
+            st.subheader(prayer)
+
             if existing:
-                st.success(f"{prayer}: {existing[0]}")
+                st.success(f"✅ Status: {existing[0]}")
                 continue
 
-            col1, col2, col3 = st.columns(3)
+            status = st.selectbox(
+                "Select status",
+                ["Select", "On Time", "Late", "Missed"],
+                key=f"{prayer}_status"
+            )
 
-            if col1.button(f"✅ {prayer} On Time", key=f"{prayer}_on"):
+            if st.button("Save", key=f"{prayer}_save") and status != "Select":
                 cur.execute("""
                     INSERT INTO prayer_logs (user_id, date, prayer_name, timing_status, marked_at)
                     VALUES (?, ?, ?, ?, datetime('now'))
-                """, (user_id, today, prayer, "On Time"))
-                conn.commit()
-                st.rerun()
-
-            if col2.button(f"🟡 {prayer} Late", key=f"{prayer}_late"):
-                cur.execute("""
-                    INSERT INTO prayer_logs (user_id, date, prayer_name, timing_status, marked_at)
-                    VALUES (?, ?, ?, ?, datetime('now'))
-                """, (user_id, today, prayer, "Late"))
-                conn.commit()
-                st.rerun()
-
-            if col3.button(f"❌ {prayer} Missed", key=f"{prayer}_miss"):
-                cur.execute("""
-                    INSERT INTO prayer_logs (user_id, date, prayer_name, timing_status, marked_at)
-                    VALUES (?, ?, ?, ?, datetime('now'))
-                """, (user_id, today, prayer, "Missed"))
+                """, (user_id, today, prayer, status))
                 conn.commit()
                 st.rerun()
 
         conn.close()
+
 
 
 
