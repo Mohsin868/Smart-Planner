@@ -1,46 +1,50 @@
 import streamlit as st
 from auth import login_user, register_user
 from dashboard import launch_dashboard
+from db import init_db
 
-# Initialize session_state
-# ---------- SESSION STATE INIT ----------
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
+# ---------------- INIT DATABASE ----------------
+init_db()
 
-if "user" not in st.session_state:
-    st.session_state.user = None
-
-if "xp" not in st.session_state:
-    st.session_state.xp = 0
-
-if "level" not in st.session_state:
-    st.session_state.level = 1
-
-if "streak" not in st.session_state:
-    st.session_state.streak = 0
+# ---------------- SESSION STATE INIT ----------------
+defaults = {
+    "logged_in": False,
+    "user": None,
+    "user_id": None
+}
 
 
-# ---------- LOGGED IN ----------
-if st.session_state["logged_in"]:
-    st.sidebar.success(f"Logged in as: {st.session_state['user']}")
-    if st.sidebar.button("Logout"):
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
+
+
+# ---------------- LOGGED IN VIEW ----------------
+if st.session_state.logged_in:
+
+    st.sidebar.success(f"👤 Logged in as: {st.session_state.user}")
+
+    if st.sidebar.button("🚪 Logout"):
         st.session_state.clear()
         st.rerun()
+
+    # 🔥 MAIN APP
     launch_dashboard()
 
-# ---------- LOGIN / REGISTER ----------
+
+# ---------------- AUTH VIEW ----------------
 else:
     st.title("🧠 Smart Life Planner")
     st.subheader("Login or Register to continue")
 
     choice = st.radio("Select option:", ["Login", "Register"])
 
+    # ---------- LOGIN ----------
     if choice == "Login":
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        login_btn = st.button("Login")
 
-        if login_btn:
+        if st.button("Login"):
             success, msg = login_user(username, password)
             if success:
                 st.success(msg)
@@ -48,19 +52,19 @@ else:
             else:
                 st.error(msg)
 
-    elif choice == "Register":
+    # ---------- REGISTER ----------
+    else:
         username = st.text_input("Choose a Username")
         password = st.text_input("Password", type="password")
-        confirm_password = st.text_input("Confirm Password", type="password")
-        register_btn = st.button("Register")
+        confirm = st.text_input("Confirm Password", type="password")
 
-        if register_btn:
-            if password != confirm_password:
+        if st.button("Register"):
+            if password != confirm:
                 st.error("Passwords do not match!")
             else:
                 success, msg = register_user(username, password)
                 if success:
                     st.success(msg)
-                    st.info("Go to Login tab to access your account.")
+                    st.info("You can now login.")
                 else:
                     st.error(msg)

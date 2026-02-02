@@ -1,10 +1,22 @@
-import pandas as pd
+from db import get_connection
 
-CSV_FILE = "data/user_tasks.csv"
 
-def update_task_status(task_name, completed):
-    tasks = pd.read_csv(CSV_FILE)
-    tasks.loc[tasks["Task Name"] == task_name, "Status"] = (
-        "Completed" if completed else "Pending"
+def update_task_status(task_id, user_id, new_status):
+    """
+    Update task status for a specific task belonging to a specific user.
+    """
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        UPDATE tasks
+        SET status = ?
+        WHERE id = ? AND user_id = ?
+        """,
+        (new_status, task_id, user_id)
     )
-    tasks.to_csv(CSV_FILE, index=False)
+
+    conn.commit()
+    conn.close()

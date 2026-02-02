@@ -1,66 +1,57 @@
-import streamlit as st
-import json
 import hashlib
-import os
+import streamlit as st
+from db import get_connection
 
-USERS_FILE = "data/users.json"
-
-# Ensure data folder and users file exist
-if not os.path.exists("data"):
-    os.makedirs("data")
-
-if not os.path.exists(USERS_FILE):
-    with open(USERS_FILE, "w") as f:
-        json.dump({}, f)
-
-# ---------- HASH FUNCTION ----------
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 
-# ---------- REGISTER FUNCTION ----------
 def register_user(username, password):
-    with open(USERS_FILE, "r") as f:
-        users = json.load(f)
+    conn = get_connection()
+    cur = conn.cursor()
 
-    if username in users:
+    try:
+        cur.execute(
+            "INSERT INTO users (username, password) VALUES (?, ?)",
+            (username, hash_password(password))
+        )
+        user_id = cur.lastrowid
+
+        # Create stats row
+        cur.execute(
+            "INSERT INTO stats (user_id) VALUES (?)",
+            (user_id,)
+        )
+
+        conn.commit()
+        return True, "Registration successful!"
+    except:
         return False, "Username already exists!"
-    
-    users[username] = hash_password(password)
-
-    with open(USERS_FILE, "w") as f:
-        json.dump(users, f)
-
-    # Create user task file with headers
-    tasks_file = f"data/{username}_tasks.csv"
-    if not os.path.exists(tasks_file):
-        with open(tasks_file, "w") as f:
-            f.write(
-                "Task Name,Category,Priority,Due Date,Duration,Notes,Status\n"
-            )
-
-    # Create routine file safely
-    routine_file = f"data/{username}_routine.json"
-    if not os.path.exists(routine_file):
-        with open(routine_file, "w") as f:
-            json.dump({}, f)
+    finally:
+        conn.close()
 
 
-    return True, "Registration successful! Please login."
-
-
-# ---------- LOGIN FUNCTION ----------
 def login_user(username, password):
-    with open(USERS_FILE, "r") as f:
-        users = json.load(f)
+    conn = get_connection()
+    cur = conn.cursor()
 
-    if username not in users:
-        return False, "Username does not exist!"
+    cur.execute(
+        "SELECT id, password FROM users WHERE username = ?",
+        (username,)
+    )
+    user = cur.fetchone()
+    conn.close()
 
-    if users[username] != hash_password(password):
-        return False, "Incorrect password!"
+    if not user:
+        return False, "User not found"
 
-    # Set session state
-    st.session_state["user"] = username
-    st.session_state["logged_in"] = True
-    return True, "Login successful!"
+    user_id, stored_password = user
+
+    if stored_password != hash_password(password):
+        return False, "Incorrect password"
+
+    st.session_state.user = username
+    st.session_state.user_id = user_id
+    st.session_state.logged_in = True
+
+    return True, "Login successful"

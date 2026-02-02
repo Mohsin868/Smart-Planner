@@ -1,42 +1,38 @@
 import pandas as pd
-import os
+from db import get_connection
 
-CSV_FILE = "data/tasks.csv"
-
-COLUMNS = [
-    "Task Name",
-    "Category",
-    "Priority",
-    "Due Date",
-    "Duration",
-    "Notes",
-    "Status"
-]
-
-def load_tasks():
-    # Ensure data folder exists
-    os.makedirs("data", exist_ok=True)
-
-    # Create CSV if it does not exist
-    if not os.path.exists(CSV_FILE):
-        df = pd.DataFrame(columns=COLUMNS)
-        df.to_csv(CSV_FILE, index=False)
-
-    return pd.read_csv(CSV_FILE)
+def load_tasks(user_id):
+    conn = get_connection()
+    df = pd.read_sql(
+        "SELECT * FROM tasks WHERE user_id = ?",
+        conn,
+        params=(user_id,)
+    )
+    conn.close()
+    return df
 
 
-def add_task(task_name, category, priority, due_date, duration, notes):
-    df = load_tasks()
+def add_task(user_id, name, category, priority, due_date, duration, notes):
+    conn = get_connection()
+    cur = conn.cursor()
 
-    new_task = {
-        "Task Name": task_name,
-        "Category": category,
-        "Priority": priority,
-        "Due Date": due_date,
-        "Duration": duration,
-        "Notes": notes,
-        "Status": "Pending"
-    }
+    cur.execute("""
+        INSERT INTO tasks
+        (user_id, task_name, category, priority, due_date, duration, notes, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')
+    """, (user_id, name, category, priority, due_date, duration, notes))
 
-    df.loc[len(df)] = new_task
-    df.to_csv(CSV_FILE, index=False)
+    conn.commit()
+    conn.close()
+
+def delete_task(task_id, user_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "DELETE FROM tasks WHERE id = ? AND user_id = ?",
+        (task_id, user_id)
+    )
+
+    conn.commit()
+    conn.close()

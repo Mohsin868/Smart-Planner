@@ -1,85 +1,108 @@
 import streamlit as st
-from input import load_tasks, add_task
-from tracker import update_task_status
-from scheduler import generate_schedule
-from routine_generator import routine_page
 import pandas as pd
 
+from input import load_tasks, add_task
+from tracker import update_task_status
+from input import delete_task
 
-# ---------------- SESSION STATE ----------------
-if "xp" not in st.session_state:
-    st.session_state.xp = 0
+from scheduler import generate_schedule
+from routine_generator import routine_page
 
-if "streak" not in st.session_state:
-    st.session_state.streak = 0
 
-if "mood" not in st.session_state:
-    st.session_state.mood = "🙂 Okay"
+# ---------------- SESSION STATE DEFAULTS ----------------
+for key, value in {
+    "mood": "🙂 Okay",
+    "focus_mode": False,
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
-if "focus_mode" not in st.session_state:
-    st.session_state.focus_mode = False
 
 
 def launch_dashboard():
     st.set_page_config(page_title="Smart Daily Planner", layout="wide")
 
-    # Sidebar Navigation
+    # ---------------- SAFETY CHECK ----------------
+    if "user_id" not in st.session_state or st.session_state.user_id is None:
+        st.error("User session expired. Please log in again.")
+        st.stop()
+
+    user_id = st.session_state.user_id
+
+    # ---------------- SIDEBAR ----------------
     st.sidebar.title("🧭 Navigation")
     page = st.sidebar.radio(
         "Go to",
         [
-    "🏠 Home",
-    "➕ Add Task",
-    "✅ Completed Tasks",
-    "📅 Schedule",
-    "🕒 Daily Routine (Optional)"
-]
-
+            "🏠 Home",
+            "➕ Add Task",
+            "✅ Completed Tasks",
+            "📅 Schedule",
+            "🕒 Daily Routine (Optional)",
+        ],
     )
 
-    tasks = load_tasks()
-    tasks["Due Date"] = pd.to_datetime(tasks["Due Date"])
+    # ---------------- LOAD TASKS ----------------
+    tasks = load_tasks(user_id)
 
-    # ---------------- HOME PAGE ----------------
+    # Normalize column names ONCE (very important)
+    if not tasks.empty:
+        tasks.columns = [c.lower() for c in tasks.columns]
+        tasks["due_date"] = pd.to_datetime(tasks["due_date"], errors="coerce")
+    else:
+        tasks = pd.DataFrame(
+            columns=[
+                "id",
+                "task_name",
+                "category",
+                "priority",
+                "due_date",
+                "duration",
+                "notes",
+                "status",
+            ]
+        )
+
+    # ======================================================
+    # 🏠 HOME PAGE
+    # ======================================================
     if page == "🏠 Home":
 
-        # ---------- GREETING ----------
         st.markdown("## 👋 Welcome back!")
         st.write("Let’s make today productive ✨")
 
-        # ---------- MOOD SELECTOR ----------
+        # ---------- MOOD ----------
         st.markdown("### 🌈 How are you feeling today?")
         st.session_state.mood = st.radio(
             "",
             ["😄 Energized", "🙂 Okay", "😴 Tired", "😔 Low"],
-            horizontal=True
+            horizontal=True,
         )
 
         # ---------- FOCUS MODE ----------
-        st.session_state.focus_mode = st.toggle("🎯 Focus Mode (Only top priorities)")
+        st.session_state.focus_mode = st.toggle("🎯 Focus Mode (Top priorities only)")
 
         st.divider()
 
         # ---------- METRICS ----------
-        pending_count = len(tasks[tasks["Status"] == "Pending"])
-        completed_count = len(tasks[tasks["Status"] == "Completed"])
+        pending_count = len(tasks[tasks["status"] == "Pending"])
+        completed_count = len(tasks[tasks["status"] == "Completed"])
 
         col1, col2, col3 = st.columns(3)
         col1.metric("🔥 Pending Tasks", pending_count)
-        col2.metric("✅ Completed", completed_count)
-        col3.metric("⚡ XP", st.session_state.get("xp", 0))
+        col2.metric("✅ Completed Tasks", completed_count)
 
         st.divider()
 
         # ---------- TASK LIST ----------
         st.markdown("### 📋 Tasks")
 
-        pending = tasks[tasks["Status"] == "Pending"].copy()
+        pending = tasks[tasks["status"] == "Pending"].copy()
 
         priority_map = {"High": 1, "Medium": 2, "Low": 3}
-        pending["PriorityRank"] = pending["Priority"].map(priority_map)
+        pending["rank"] = pending["priority"].map(priority_map)
 
-        pending = pending.sort_values(by=["PriorityRank", "Due Date"])
+        pending = pending.sort_values(by=["rank", "due_date"])
 
         if st.session_state.focus_mode:
             pending = pending.head(3)
@@ -91,44 +114,67 @@ def launch_dashboard():
         else:
             for _, row in pending.iterrows():
 
-                # Priority color
-                priority_icon = {
+                icon = {
                     "High": "🔴",
                     "Medium": "🟡",
-                    "Low": "🟢"
-                }[row["Priority"]]
+                    "Low": "🟢",
+                }[row["priority"]]
 
-                checked = st.checkbox(
-                    f"{priority_icon} **{row['Task Name']}** "
-                    f"| {row['Category']} "
-                    f"| Due: {row['Due Date'].date()}",
-                    key=row["Task Name"]
+                done = st.checkbox(
+                    f"{icon} **{row['task_name']}** | {row['category']} | Due: {row['due_date'].date()}",
+                    key=f"task_{row['id']}",
                 )
 
-                if checked:
-                    update_task_status(row["Task Name"], True)
-
-                    # XP SYSTEM
-                    if row["Priority"] == "High":
-                        st.session_state.xp += 10
-                    elif row["Priority"] == "Medium":
-                        st.session_state.xp += 7
-                    else:
-                        st.session_state.xp += 5
-
+                if done:
+                    update_task_status(row["id"], user_id, "Completed")
                     st.success("✅ Task completed!")
                     st.rerun()
 
-
-    # ---------------- ADD TASK PAGE ----------------
+    # ======================================================
+    # ➕ ADD TASK
+    # ======================================================
     elif page == "➕ Add Task":
+
         st.title("➕ Add New Task")
 
-        with st.form("add_task_form"):
+        # ---------- CATEGORY OPTIONS ----------
+        default_categories = [
+            "Work",
+            "Study",
+            "Personal",
+            "Health",
+            "Family",
+            "Errands",
+            "Other"
+        ]
+
+        # ---------- FORM ----------
+        with st.form("add_task_form", clear_on_submit=False):
+
             task_name = st.text_input("Task Name")
-            category = st.text_input("Category", "General")
-            priority = st.selectbox("Priority", ["High", "Medium", "Low"])
+
+            # Category dropdown
+            selected_category = st.selectbox(
+                "Category",
+                default_categories,
+                index=0
+            )
+
+            # Custom category if "Other"
+            if selected_category == "Other":
+                custom_category = st.text_input("Custom Category")
+                category = custom_category.strip() if custom_category.strip() else "Other"
+            else:
+                category = selected_category
+
+            priority = st.selectbox(
+                "Priority",
+                ["High", "Medium", "Low"],
+                index=1
+            )
+
             due_date = st.date_input("Due Date")
+
             duration = st.number_input(
                 "Estimated Duration (hours)",
                 min_value=0.5,
@@ -136,46 +182,112 @@ def launch_dashboard():
                 value=1.0,
                 step=0.5
             )
+
             notes = st.text_input("Notes / Tags")
 
-            submit = st.form_submit_button("Add Task")
+            # ---------- BUTTONS ----------
+            col1, col2 = st.columns(2)
+            add_btn = col1.form_submit_button("✅ Add Task")
+            add_continue_btn = col2.form_submit_button("➕ Add & Add Another")
 
-            if submit:
-                if task_name.strip() == "":
-                    st.error("Task name cannot be empty.")
-                else:
-                    add_task(
-                        task_name,
-                        category,
-                        priority,
-                        due_date,
-                        duration,
-                        notes
-                    )
-                    st.success("✅ Task added successfully!")
+        # ---------- SUBMIT LOGIC ----------
+        if add_btn or add_continue_btn:
+
+            if not task_name.strip():
+                st.error("❌ Task name cannot be empty.")
+            else:
+                add_task(
+                    user_id,
+                    task_name,
+                    category,
+                    priority,
+                    str(due_date),
+                    duration,
+                    notes
+                )
+
+                st.success("✅ Task added successfully!")
+
+                # If user chose normal Add → go back to Home
+                if add_btn:
                     st.rerun()
 
-    # ---------------- COMPLETED TASKS PAGE ----------------
+                # If Add & Continue → clear inputs manually
+                if add_continue_btn:
+                    st.session_state["add_task_form"] = {}
+
+
+    # ======================================================
+    # ✅ COMPLETED TASKS
     elif page == "✅ Completed Tasks":
         st.title("✅ Completed Tasks")
 
-        completed = tasks[tasks["Status"] == "Completed"]
+        # Filter completed tasks
+        completed = tasks[tasks["status"] == "Completed"].copy()
 
         if completed.empty:
             st.info("No completed tasks yet. Let’s get started 💪")
         else:
-            for _, row in completed.iterrows():
-                unchecked = st.checkbox(
-                    f"{row['Task Name']} | {row['Category']} | Completed",
-                    value=True
-                )
+            # ---------- SEARCH & FILTER ----------
+            st.markdown("### 🔍 Search & Filter")
+            search_term = st.text_input("Search by Task Name or Category")
+            priority_filter = st.multiselect(
+                "Filter by Priority",
+                options=["High", "Medium", "Low"],
+                default=["High", "Medium", "Low"]
+            )
 
-                if not unchecked:
-                    update_task_status(row["Task Name"], False)
+            filtered = completed[
+                completed["task_name"].str.contains(search_term, case=False, na=False) |
+                completed["category"].str.contains(search_term, case=False, na=False)
+            ]
+
+            filtered = filtered[filtered["priority"].isin(priority_filter)]
+
+            # ---------- TASK LIST ----------
+            st.markdown("### 📋 Completed Tasks List")
+            for _, row in filtered.iterrows():
+                col1, col2, col3 = st.columns([5, 1, 1])
+
+                # Task details
+                col1.write(f"**{row['task_name']}** | {row['category']} | {row['priority']} | Due: {row['due_date'].date()}")
+
+                # Undo checkbox
+                if col2.checkbox("↩️ Undo", key=f"undo_{row['id']}"):
+                    update_task_status(row["id"], st.session_state.user_id, "Pending")
+                    st.success(f"Task '{row['task_name']}' moved back to Pending!")
                     st.rerun()
 
-    # ---------------- SCHEDULE PAGE ----------------
+                # Permanent Delete button
+                if col3.button("🗑️ Delete", key=f"delete_{row['id']}"):
+                    delete_task(row["id"], st.session_state.user_id)
+                    st.success(f"Task '{row['task_name']}' deleted permanently!")
+                    st.rerun()
+
+            st.divider()
+
+            # ---------- REFLECTION BOX ----------
+            st.markdown("### ✍️ Reflection / Notes")
+            reflection = st.text_area(
+                "Write your thoughts or reflections on completed tasks today",
+                key="reflection_box",
+                height=100
+            )
+            if st.button("Save Reflection"):
+                # For now, we can just store in session_state
+                if "reflections" not in st.session_state:
+                    st.session_state.reflections = []
+                st.session_state.reflections.append(reflection)
+                st.success("✅ Reflection saved!")
+                st.rerun()
+
+
+
+    # ======================================================
+    # 📅 SCHEDULE
+    # ======================================================
     elif page == "📅 Schedule":
+
         st.title("📅 Suggested Daily Schedule")
 
         schedule = generate_schedule(tasks)
@@ -184,11 +296,12 @@ def launch_dashboard():
             st.info("No pending tasks to schedule.")
         else:
             for day, day_tasks in schedule.items():
-                st.subheader(str(day))
-                for t in day_tasks:
-                    st.write(f"- {t}")
+                st.subheader(day)
+                for task in day_tasks:
+                    st.write(f"- {task}")
 
-    # ---------------- ROUTINE PAGE ----------------
+    # ======================================================
+    # 🕒 ROUTINE
+    # ======================================================
     elif page == "🕒 Daily Routine (Optional)":
-        st.title("🕒 Daily Routine Generator")
-        routine_page()  
+        routine_page()
