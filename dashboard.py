@@ -190,7 +190,7 @@ def launch_dashboard():
 
                 # Redirect to Home
                 st.session_state.page = "🏠 Home"
-            
+                st.rerun()
 
 
 
