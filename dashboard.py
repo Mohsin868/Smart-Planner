@@ -149,7 +149,7 @@ def launch_dashboard():
         ]
 
         # ---------- FORM ----------
-        with st.form("add_task_form", clear_on_submit=False):
+        with st.form("add_task_form", clear_on_submit=True):
 
             task_name = st.text_input("Task Name")
 
