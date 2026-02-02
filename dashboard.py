@@ -137,42 +137,27 @@ def launch_dashboard():
 
         st.title("➕ Add New Task")
 
-        # ---------- CATEGORY OPTIONS ----------
         default_categories = [
-            "Work",
-            "Study",
-            "Personal",
-            "Health",
-            "Family",
-            "Errands",
-            "Other"
+            "Work", "Study", "Personal", "Health",
+            "Family", "Errands", "Other"
         ]
 
-        # ---------- FORM ----------
         with st.form("add_task_form", clear_on_submit=True):
 
             task_name = st.text_input("Task Name")
 
-            # Category dropdown
             selected_category = st.selectbox(
                 "Category",
-                default_categories,
-                index=0
+                default_categories
             )
 
-            # Custom category if "Other"
             if selected_category == "Other":
                 custom_category = st.text_input("Custom Category")
                 category = custom_category.strip() if custom_category.strip() else "Other"
             else:
                 category = selected_category
 
-            priority = st.selectbox(
-                "Priority",
-                ["High", "Medium", "Low"],
-                index=1
-            )
-
+            priority = st.selectbox("Priority", ["High", "Medium", "Low"])
             due_date = st.date_input("Due Date")
 
             duration = st.number_input(
@@ -185,14 +170,9 @@ def launch_dashboard():
 
             notes = st.text_input("Notes / Tags")
 
-            # ---------- BUTTONS ----------
-            col1, col2 = st.columns(2)
-            add_btn = col1.form_submit_button("✅ Add Task")
-            add_continue_btn = col2.form_submit_button("➕ Add & Add Another")
+            submit = st.form_submit_button("✅ Add Task")
 
-        # ---------- SUBMIT LOGIC ----------
-        if add_btn or add_continue_btn:
-
+        if submit:
             if not task_name.strip():
                 st.error("❌ Task name cannot be empty.")
             else:
@@ -208,13 +188,10 @@ def launch_dashboard():
 
                 st.success("✅ Task added successfully!")
 
-                # If user chose normal Add → go back to Home
-                if add_btn:
-                    st.rerun()
+                # Redirect to Home
+                st.session_state.page = "🏠 Home"
+                st.rerun()
 
-                # If Add & Continue → clear inputs manually
-                if add_continue_btn:
-                    st.session_state["add_task_form"] = {}
 
 
     # ======================================================
