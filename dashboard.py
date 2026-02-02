@@ -27,6 +27,7 @@ def launch_dashboard():
         "Go to",
         [
             "🏠 Home",
+            "🤖 Smart Assistant",
             "➕ Add Task",
             "✅ Completed Tasks",
             "📅 Schedule",
@@ -115,6 +116,13 @@ def launch_dashboard():
                     update_task_status(row["id"], user_id, "Completed")
                     st.success("✅ Task completed!")
                     st.rerun()
+
+    # =====================================================
+    # 🤖 SMART ASSISTANT
+    # =====================================================
+    elif page == "🤖 Smart Assistant":
+        st.title("🤖 Smart Assistant")
+        st.info("This feature is under development. Stay tuned for updates!")
 
     # ======================================================
     # ➕ ADD TASK
