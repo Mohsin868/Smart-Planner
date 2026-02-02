@@ -1,26 +1,15 @@
 import sqlite3
 
-DB_PATH = "smart_planner.db"
+# Replace with your actual DB path
+DB_PATH = "database/planner.db"
 
 conn = sqlite3.connect(DB_PATH)
 cur = conn.cursor()
 
-cur.execute("DROP TABLE IF EXISTS tasks;")
+cur.execute("PRAGMA table_info(tasks);")
+columns = cur.fetchall()
 
-cur.execute("""
-CREATE TABLE tasks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    task_name TEXT,
-    category TEXT,
-    priority TEXT,
-    due_date TEXT,
-    reminder_time TEXT,
-    notes TEXT,
-    status TEXT
-)
-""")
+for col in columns:
+    print(col)
 
-conn.commit()
 conn.close()
-print("✅ tasks table recreated with reminder_time column!")

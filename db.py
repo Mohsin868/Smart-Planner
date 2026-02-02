@@ -30,12 +30,17 @@ def init_db():
             category TEXT,
             priority TEXT,
             due_date TEXT,
-            reminder_time TEXT,
             notes TEXT,
             status TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     """)
+
+    # Add reminder_time if missing
+    cur.execute("PRAGMA table_info(tasks)")
+    columns = [col[1] for col in cur.fetchall()]
+    if "reminder_time" not in columns:
+        cur.execute("ALTER TABLE tasks ADD COLUMN reminder_time TEXT")
 
     # USER STATS TABLE
     cur.execute("""
