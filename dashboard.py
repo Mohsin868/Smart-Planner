@@ -50,7 +50,7 @@ def launch_dashboard():
                 "category",
                 "priority",
                 "due_date",
-                "duration",
+                "reminder_time",
                 "notes",
                 "status",
             ]
@@ -64,14 +64,7 @@ def launch_dashboard():
         st.markdown("## 👋 Welcome back!")
         st.write("Let’s make today productive ✨")
 
-        # ---------- MOOD ----------
-        st.markdown("### 🌈 How are you feeling today?")
-        st.session_state.mood = st.radio(
-            "",
-            ["😄 Energized", "🙂 Okay", "😴 Tired", "😔 Low"],
-            horizontal=True,
-        )
-
+       
         # ---------- FOCUS MODE ----------
         st.session_state.focus_mode = st.toggle("🎯 Focus Mode (Top priorities only)")
 
@@ -153,13 +146,9 @@ def launch_dashboard():
             priority = st.selectbox("Priority", ["High", "Medium", "Low"])
             due_date = st.date_input("Due Date")
 
-            duration = st.number_input(
-                "Estimated Duration (hours)",
-                min_value=0.5,
-                max_value=24.0,
-                value=1.0,
-                step=0.5
-            )
+            reminder_time = st.time_input("Reminder Time")
+            
+
 
             notes = st.text_input("Notes / Tags")
 
@@ -175,7 +164,7 @@ def launch_dashboard():
                     category,
                     priority,
                     str(due_date),
-                    duration,
+                    str(reminder_time),
                     notes
                 )
                 # Set success flag

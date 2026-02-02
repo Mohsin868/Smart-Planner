@@ -12,15 +12,15 @@ def load_tasks(user_id):
     return df
 
 
-def add_task(user_id, name, category, priority, due_date, duration, notes):
+def add_task(user_id, name, category, priority, due_date, reminder_time, notes):
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
         INSERT INTO tasks
-        (user_id, task_name, category, priority, due_date, duration, notes, status)
+        (user_id, task_name, category, priority, due_date, reminder_time, notes, status)
         VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')
-    """, (user_id, name, category, priority, due_date, duration, notes))
+    """, (user_id, name, category, priority, due_date, reminder_time, notes))
 
     conn.commit()
     conn.close()

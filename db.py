@@ -30,7 +30,7 @@ def init_db():
             category TEXT,
             priority TEXT,
             due_date TEXT,
-            duration REAL,
+            reminder_time TEXT,
             notes TEXT,
             status TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id)
