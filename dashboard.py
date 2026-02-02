@@ -190,7 +190,7 @@ def launch_dashboard():
 
                 # Redirect to Home
                 st.session_state.page = "🏠 Home"
-                st.rerun()
+            
 
 
 
@@ -242,22 +242,6 @@ def launch_dashboard():
                     st.rerun()
 
             st.divider()
-
-            # ---------- REFLECTION BOX ----------
-            st.markdown("### ✍️ Reflection / Notes")
-            reflection = st.text_area(
-                "Write your thoughts or reflections on completed tasks today",
-                key="reflection_box",
-                height=100
-            )
-            if st.button("Save Reflection"):
-                # For now, we can just store in session_state
-                if "reflections" not in st.session_state:
-                    st.session_state.reflections = []
-                st.session_state.reflections.append(reflection)
-                st.success("✅ Reflection saved!")
-                st.rerun()
-
 
 
     # ======================================================
