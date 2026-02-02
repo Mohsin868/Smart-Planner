@@ -30,6 +30,7 @@ def launch_dashboard():
         "Go to",
         [
             "🏠 Home",
+            "Prayers",
             "➕ Add Task",
             "✅ Completed Tasks",
             "📅 Schedule",
@@ -118,8 +119,23 @@ def launch_dashboard():
                     update_task_status(row["id"], user_id, "Completed")
                     st.success("✅ Task completed!")
                     st.rerun()
+    # ======================================================
+    # ➕ Prayers
+    # ======================================================
+    elif page == "Prayers":
+        st.title("🙏 Daily Prayers")
+        st.markdown("""
+        Here you can find a selection of daily prayers to inspire and uplift you throughout your day.
 
+        ### Morning Prayer
+        *"Dear Lord, as I begin this day, I ask for your guidance and strength. Help me to face the challenges ahead with courage and faith. May my actions reflect your love and grace."*
 
+        ### Midday Prayer
+        *"Heavenly Father, in the midst of my busy day, I pause to seek your presence. Renew my spirit and give me peace. Help me to be a light to those around me."*
+
+        ### Evening Prayer
+        *"Lord, as the day comes to a close, I thank you for your blessings. Forgive my shortcomings and help me to rest in your peace. Prepare me for tomorrow with hope and joy."*
+        """)
 
     # ======================================================
     # ➕ ADD TASK
