@@ -169,7 +169,7 @@ def launch_dashboard():
                     category,
                     priority,
                     str(due_date),
-                    str(reminder_time),
+                    reminder_time.strftime("%H:%M"), # Format time as HH:MM,
                     notes
                 )
                 # Set success flag
