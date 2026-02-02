@@ -175,22 +175,22 @@ def launch_dashboard():
         if submit:
             if not task_name.strip():
                 st.error("❌ Task name cannot be empty.")
-            else:
-                add_task(
-                    user_id,
-                    task_name,
-                    category,
-                    priority,
-                    str(due_date),
-                    duration,
-                    notes
-                )
-                # Set success flag
-                st.session_state.task_added_msg = f"✅ Task '{task_name}' added successfully!"
+        else:
+            add_task(
+                user_id,
+                task_name,
+                category,
+                priority,
+                str(due_date),
+                duration,
+                notes
+            )
+            # Set success flag
+            st.session_state.task_added_msg = f"✅ Task '{task_name}' added successfully!"
 
-                # Redirect to Home
-                st.session_state.page = "🏠 Home"
-                st.rerun()
+            # Redirect to Home
+            st.session_state.page = "🏠 Home"
+            st.rerun()
 
 
 
