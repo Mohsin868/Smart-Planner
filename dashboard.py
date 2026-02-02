@@ -3,7 +3,7 @@ import pandas as pd
 
 
 import os
-import openai
+from openai import openai
 
 from input import load_tasks, add_task
 from tracker import update_task_status
