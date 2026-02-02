@@ -4,18 +4,10 @@ import pandas as pd
 from input import load_tasks, add_task
 from tracker import update_task_status
 from input import delete_task
+from input import delete_all_pending_tasks, delete_all_completed_tasks, delete_all_tasks
 
 from scheduler import generate_schedule
 from routine_generator import routine_page
-
-
-# ---------------- SESSION STATE DEFAULTS ----------------
-for key, value in {
-    "mood": "🙂 Okay",
-    "focus_mode": False,
-}.items():
-    if key not in st.session_state:
-        st.session_state[key] = value
 
 
 
@@ -39,6 +31,7 @@ def launch_dashboard():
             "✅ Completed Tasks",
             "📅 Schedule",
             "🕒 Daily Routine (Optional)",
+            "⚙️ Settings",
         ],
     )
 
@@ -266,3 +259,27 @@ def launch_dashboard():
     # ======================================================
     elif page == "🕒 Daily Routine (Optional)":
         routine_page()
+
+    # ======================================================
+    # Settings
+    # ======================================================
+    elif page == "⚙️ Settings":
+        st.title("⚙️ Settings")
+
+        st.markdown("### 🧹 Clear Tasks")
+
+        if st.button("Delete All Pending Tasks"):
+            delete_all_pending_tasks(user_id)
+            st.success("All pending tasks deleted.")
+            st.rerun()
+
+        if st.button("Delete All Completed Tasks"):
+            delete_all_completed_tasks(user_id)
+            st.success("All completed tasks deleted.")
+            st.rerun()
+
+        if st.button("Delete All Tasks"):
+            delete_all_tasks(user_id)
+            st.success("All tasks deleted.")
+            st.rerun()
+
