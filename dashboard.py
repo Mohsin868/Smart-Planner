@@ -1,9 +1,6 @@
 import streamlit as st
 import pandas as pd
 
-
-
-
 from input import load_tasks, add_task
 from tracker import update_task_status
 from input import delete_task
@@ -30,7 +27,7 @@ def launch_dashboard():
         "Go to",
         [
             "🏠 Home",
-            "🙏 Prayers",
+            "🕌 Prayers",
             "➕ Add Task",
             "✅ Completed Tasks",
             "📅 Schedule",
@@ -122,20 +119,39 @@ def launch_dashboard():
     # ======================================================
     # ➕ Prayers
     # ======================================================
-    elif page == "Prayers":
-        st.title("🙏 Daily Prayers")
-        st.markdown("""
-        Here you can find a selection of daily prayers to inspire and uplift you throughout your day.
+    elif page == "🕌 Prayers":
 
-        ### Morning Prayer
-        *"Dear Lord, as I begin this day, I ask for your guidance and strength. Help me to face the challenges ahead with courage and faith. May my actions reflect your love and grace."*
+        st.title("🕌 Daily Prayers")
 
-        ### Midday Prayer
-        *"Heavenly Father, in the midst of my busy day, I pause to seek your presence. Renew my spirit and give me peace. Help me to be a light to those around me."*
+        prayers = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]
 
-        ### Evening Prayer
-        *"Lord, as the day comes to a close, I thank you for your blessings. Forgive my shortcomings and help me to rest in your peace. Prepare me for tomorrow with hope and joy."*
-        """)
+        # Session-based daily reset
+        today = str(pd.Timestamp.today().date())
+
+        if "prayer_date" not in st.session_state or st.session_state.prayer_date != today:
+            st.session_state.prayer_date = today
+            st.session_state.prayers = {p: False for p in prayers}
+
+        st.caption(f"📅 {today}")
+
+        for prayer in prayers:
+            col1, col2 = st.columns([3, 1])
+
+            with col1:
+                st.markdown(f"### {prayer}")
+
+            with col2:
+                st.session_state.prayers[prayer] = st.checkbox(
+                    "Prayed",
+                    value=st.session_state.prayers[prayer],
+                    key=prayer
+                )
+
+        completed = sum(st.session_state.prayers.values())
+        st.progress(completed / len(prayers))
+
+        st.success(f"✅ {completed} / {len(prayers)} prayers completed today")
+
 
     # ======================================================
     # ➕ ADD TASK
