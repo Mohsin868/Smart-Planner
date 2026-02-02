@@ -185,12 +185,8 @@ def launch_dashboard():
                     duration,
                     notes
                 )
-
-            st.success("✅ Task added successfully!")
-
-            # Redirect to Home
-            st.session_state.page = "🏠 Home"
-            st.rerun()
+                st.success(f"✅ Task '{task_name}' added successfully!")
+                st.rerun()
 
 
 
