@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 
+import openai
+import os
+
 from input import load_tasks, add_task
 from tracker import update_task_status
 from input import delete_task
@@ -122,7 +125,41 @@ def launch_dashboard():
     # =====================================================
     elif page == "🤖 Smart Assistant":
         st.title("🤖 Smart Assistant")
-        st.info("This feature is under development. Stay tuned for updates!")
+
+        query = st.text_input("Ask your assistant:", placeholder="e.g., What are my tasks today?")
+
+    if st.button("Send"):
+        tasks_df = load_tasks(user_id)
+        tasks_today = tasks_df[tasks_df['due_date'] == pd.Timestamp.today().strftime("%Y-%m-%d")]
+
+        tasks_list = [
+            f"{row['task_name']} | {row['priority']} | {row['reminder_time']} | {row['category']}"
+            for _, row in tasks_today.iterrows()
+        ]
+        tasks_text = "\n".join(tasks_list) if tasks_list else "No tasks for today."
+
+        prompt = f"""
+        You are a helpful assistant for a productivity app. 
+        The user has the following tasks for today:
+        {tasks_text}
+
+        User question: {query}
+
+        Answer concisely and helpfully.
+        """
+
+        openai.api_key = os.environ.get("OPENAI_API_KEY")
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.5
+            )
+            answer = response['choices'][0]['message']['content']
+        except Exception as e:
+            answer = f"Error: {str(e)}"
+
+        st.markdown(f"**Assistant:** {answer}")
 
     # ======================================================
     # ➕ ADD TASK
@@ -271,17 +308,18 @@ def launch_dashboard():
         st.markdown("### 🧹 Clear Tasks")
 
         if st.button("Delete All Pending Tasks"):
-            delete_all_pending_tasks(user_id)
-            st.success("All pending tasks deleted.")
-            st.rerun()
-
+            if st.confirm("Are you sure you want to delete ALL pending tasks?"):
+                delete_all_pending_tasks(user_id)
+                st.success("✅ All pending tasks deleted.")
+                st.rerun()
         if st.button("Delete All Completed Tasks"):
-            delete_all_completed_tasks(user_id)
-            st.success("All completed tasks deleted.")
-            st.rerun()
-
-        if st.button("Delete All Tasks"):
-            delete_all_tasks(user_id)
-            st.success("All tasks deleted.")
-            st.rerun()
+            if st.confirm("Are you sure you want to delete ALL completed tasks?"):
+                delete_all_completed_tasks(user_id)
+                st.success("✅ All completed tasks deleted.")
+                st.rerun()
+        if st.button("Delete All Tasks / Reset Account"):
+            if st.confirm("Are you sure you want to delete ALL tasks? This cannot be undone."):
+                delete_all_tasks(user_id)
+                st.success("✅ All tasks deleted. Account reset.")
+                st.rerun()
 
