@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-import openai
+
 import os
 
 from input import load_tasks, add_task
@@ -147,8 +147,12 @@ def launch_dashboard():
 
         Answer concisely and helpfully.
         """
-
-        openai.api_key = os.environ.get("OPENAI_API_KEY")
+        try:
+            import openai
+        except ModuleNotFoundError:
+            openai = None
+        st.warning("Smart Agent is unavailable. Install 'openai' in requirements.txt.")
+        openai.api_key = os.getenv("OPENAI_API_KEY")
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
