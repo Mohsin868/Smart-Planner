@@ -2,8 +2,7 @@ import streamlit as st
 import pandas as pd
 
 
-import os
-from openai import openai
+
 
 from input import load_tasks, add_task
 from tracker import update_task_status
@@ -31,7 +30,6 @@ def launch_dashboard():
         "Go to",
         [
             "🏠 Home",
-            "🤖 Smart Assistant",
             "➕ Add Task",
             "✅ Completed Tasks",
             "📅 Schedule",
@@ -121,50 +119,7 @@ def launch_dashboard():
                     st.success("✅ Task completed!")
                     st.rerun()
 
-    # =====================================================
-    # 🤖 SMART ASSISTANT
-    # =====================================================
-    elif page == "🤖 Smart Assistant":
-        st.title("🤖 Smart Assistant")
 
-        query = st.text_input("Ask your assistant:", placeholder="e.g., What are my tasks today?")
-
-    if st.button("Send"):
-        tasks_df = load_tasks(user_id)
-        tasks_today = tasks_df[tasks_df['due_date'] == pd.Timestamp.today().strftime("%Y-%m-%d")]
-
-        tasks_list = [
-            f"{row['task_name']} | {row['priority']} | {row['reminder_time']} | {row['category']}"
-            for _, row in tasks_today.iterrows()
-        ]
-        tasks_text = "\n".join(tasks_list) if tasks_list else "No tasks for today."
-
-        prompt = f"""
-        You are a helpful assistant for a productivity app. 
-        The user has the following tasks for today:
-        {tasks_text}
-
-        User question: {query}
-
-        Answer concisely and helpfully.
-        """
-        try:
-            import openai
-        except ModuleNotFoundError:
-            openai = None
-        st.warning("Smart Agent is unavailable. Install 'openai' in requirements.txt.")
-        openai.api_key = os.getenv("OPENAI_API_KEY")
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.5
-            )
-            answer = response['choices'][0]['message']['content']
-        except Exception as e:
-            answer = f"Error: {str(e)}"
-
-        st.markdown(f"**Assistant:** {answer}")
 
     # ======================================================
     # ➕ ADD TASK
