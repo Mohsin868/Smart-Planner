@@ -52,6 +52,18 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     """)
+    # PRAYER LOGS TABLE
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS prayer_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            date TEXT,
+            prayer_name TEXT,
+            timing_status TEXT,
+            marked_at TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
 
     conn.commit()
     conn.close()

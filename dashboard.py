@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from database import get_connection
 
 from input import load_tasks, add_task
 from tracker import update_task_status
@@ -123,34 +124,53 @@ def launch_dashboard():
 
         st.title("🕌 Daily Prayers")
 
-        prayers = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]
+        today = pd.Timestamp.today().date().isoformat()
+        user_id = st.session_state.user_id
 
-        # Session-based daily reset
-        today = str(pd.Timestamp.today().date())
+        conn = get_connection()
+        cur = conn.cursor()
 
-        if "prayer_date" not in st.session_state or st.session_state.prayer_date != today:
-            st.session_state.prayer_date = today
-            st.session_state.prayers = {p: False for p in prayers}
+        for prayer in ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]:
 
-        st.caption(f"📅 {today}")
+            cur.execute("""
+                SELECT timing_status FROM prayer_logs
+                WHERE user_id=? AND date=? AND prayer_name=?
+            """, (user_id, today, prayer))
 
-        for prayer in prayers:
-            col1, col2 = st.columns([3, 1])
+            existing = cur.fetchone()
 
-            with col1:
-                st.markdown(f"### {prayer}")
+            if existing:
+                st.success(f"{prayer}: {existing[0]}")
+                continue
 
-            with col2:
-                st.session_state.prayers[prayer] = st.checkbox(
-                    "Prayed",
-                    value=st.session_state.prayers[prayer],
-                    key=prayer
-                )
+            col1, col2, col3 = st.columns(3)
 
-        completed = sum(st.session_state.prayers.values())
-        st.progress(completed / len(prayers))
+            if col1.button(f"✅ {prayer} On Time", key=f"{prayer}_on"):
+                cur.execute("""
+                    INSERT INTO prayer_logs (user_id, date, prayer_name, timing_status, marked_at)
+                    VALUES (?, ?, ?, ?, datetime('now'))
+                """, (user_id, today, prayer, "On Time"))
+                conn.commit()
+                st.rerun()
 
-        st.success(f"✅ {completed} / {len(prayers)} prayers completed today")
+            if col2.button(f"🟡 {prayer} Late", key=f"{prayer}_late"):
+                cur.execute("""
+                    INSERT INTO prayer_logs (user_id, date, prayer_name, timing_status, marked_at)
+                    VALUES (?, ?, ?, ?, datetime('now'))
+                """, (user_id, today, prayer, "Late"))
+                conn.commit()
+                st.rerun()
+
+            if col3.button(f"❌ {prayer} Missed", key=f"{prayer}_miss"):
+                cur.execute("""
+                    INSERT INTO prayer_logs (user_id, date, prayer_name, timing_status, marked_at)
+                    VALUES (?, ?, ?, ?, datetime('now'))
+                """, (user_id, today, prayer, "Missed"))
+                conn.commit()
+                st.rerun()
+
+        conn.close()
+
 
 
     # ======================================================
