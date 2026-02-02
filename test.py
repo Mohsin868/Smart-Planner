@@ -1,6 +1,6 @@
 import sqlite3
 
-DB_PATH = "database/planner.db"
+DB_PATH = "smart_planner.db"
 
 conn = sqlite3.connect(DB_PATH)
 cur = conn.cursor()

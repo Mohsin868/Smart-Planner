@@ -146,7 +146,12 @@ def launch_dashboard():
             priority = st.selectbox("Priority", ["High", "Medium", "Low"])
             due_date = st.date_input("Due Date")
 
-            reminder_time = st.time_input("Reminder Time")
+            # Instead of duration
+            reminder_time = st.time_input(
+                "Set Reminder Time",
+                value=pd.to_datetime("09:00").time()
+            )
+
             
 
 
