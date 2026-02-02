@@ -30,7 +30,7 @@ def launch_dashboard():
         "Go to",
         [
             "🏠 Home",
-            "Prayers",
+            "🙏 Prayers",
             "➕ Add Task",
             "✅ Completed Tasks",
             "📅 Schedule",
