@@ -1,6 +1,6 @@
 import hashlib
 import streamlit as st
-from db import get_connection
+from ddb import get_connection
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()

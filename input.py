@@ -1,5 +1,5 @@
 import pandas as pd
-from db import get_connection
+from ddb import get_connection
 
 def load_tasks(user_id):
     conn = get_connection()

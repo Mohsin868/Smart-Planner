@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-from db import get_connection
+from ddb import get_connection
 
 from input import load_tasks, add_task
 from tracker import update_task_status

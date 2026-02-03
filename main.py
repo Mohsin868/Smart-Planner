@@ -1,7 +1,7 @@
 import streamlit as st
 from auth import login_user, register_user
 from dashboard import launch_dashboard
-from db import init_db
+from ddb import init_db
 
 # ---------------- INIT DATABASE ----------------
 init_db()

@@ -1,4 +1,4 @@
-from db import get_connection
+from ddb import get_connection
 
 
 def update_task_status(task_id, user_id, new_status):
