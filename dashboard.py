@@ -11,6 +11,12 @@ from input import delete_all_pending_tasks, delete_all_completed_tasks, delete_a
 from scheduler import generate_schedule
 from routine_generator import routine_page
 
+from fuel_tracker import fuel_tracker_page
+
+from energy_tracker import energy_tracker_page
+
+from admin_tools import admin_panel
+
 # ---------------- SUPABASE CLIENT ----------------
 supabase = get_supabase()
 
@@ -36,6 +42,9 @@ def launch_dashboard():
             "✅ Completed Tasks",
             "📅 Schedule",
             "🕒 Daily Routine (Optional)",
+            "🚗 Fuel Tracker",
+            "⚡ Energy Tracker",
+            "🧰 Admin Tools",
             "⚙️ Settings",
         ],
     )
@@ -112,6 +121,18 @@ def launch_dashboard():
 
         else:
             st.success("🎉 No pending tasks!")
+
+    # ======================================================
+    # 🚗 FUEL TRACKER
+    # ======================================================
+    elif page == "🚗 Fuel Tracker":
+        fuel_tracker_page(user_id)
+
+    # ======================================================
+    # ⚡ ENERGY TRACKER
+    # ======================================================
+    elif page == "⚡ Energy Tracker":
+        energy_tracker_page(user_id)
 
     # ======================================================
     # 🕌 PRAYERS
@@ -261,6 +282,9 @@ def launch_dashboard():
     # ======================================================
     elif page == "🕒 Daily Routine (Optional)":
         routine_page()
+
+    elif page == "🧰 Admin Tools":
+        admin_panel(user_id)
 
     # ======================================================
     # ⚙️ SETTINGS
