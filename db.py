@@ -1,11 +1,12 @@
-from supabase import create_client
 import streamlit as st
-
-url = st.secrets["SUPABASE_URL"]
-key = st.secrets["SUPABASE_KEY"]
-
-supabase = create_client(url, key)
-
+from supabase import create_client
 
 def get_supabase():
-    return supabase
+    url = st.secrets.get("SUPABASE_URL")
+    key = st.secrets.get("SUPABASE_KEY")
+
+    if not url or not key:
+        st.error("Missing Supabase credentials")
+        st.stop()
+
+    return create_client(url, key)
