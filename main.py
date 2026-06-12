@@ -5,4 +5,4 @@ st.write("URL:", st.secrets["SUPABASE_URL"])
 key = st.secrets["SUPABASE_KEY"]
 
 st.write("Key Length:", len(key))
-st.write("Key Prefix:", key[:20])
+st.write("Full Key:", key)
