@@ -1,8 +1,6 @@
 import hashlib
 from db import get_supabase
 
-supabase = get_supabase()
-
 
 # ---------------- HASH PASSWORD ----------------
 def hash_password(password):
@@ -12,9 +10,9 @@ def hash_password(password):
 # ---------------- REGISTER USER ----------------
 def register_user(username, password):
 
+    supabase = get_supabase()  # ✅ move inside function
     hashed = hash_password(password)
 
-    # check if user exists
     existing = supabase.table("users") \
         .select("*") \
         .eq("username", username) \
@@ -34,6 +32,7 @@ def register_user(username, password):
 # ---------------- LOGIN USER ----------------
 def login_user(username, password):
 
+    supabase = get_supabase()  # ✅ move inside function
     hashed = hash_password(password)
 
     response = supabase.table("users") \
